@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "/api",          // CRA proxy forwards to http://localhost:5000/api
+  baseURL: process.env.REACT_APP_API_URL || "/api",  // Use env var in production
   headers: { "Content-Type": "application/json" },
   timeout: 10000,
 });
