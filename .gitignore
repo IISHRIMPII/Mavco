@@ -36,6 +36,7 @@ instance/
 *.db
 *.sqlite
 *.sqlite3
+mavco.db
 
 # Node.js
 node_modules/
