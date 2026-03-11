@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  getOrders, createOrder, updateOrder, deleteOrder, parseOrder, deductInventory
+  getOrders, createOrder, updateOrder, deleteOrder, parseOrder, deductInventory, getInventory
 } from "../api/client";
 import OrderSticker from "./OrderSticker";
 
@@ -15,6 +15,12 @@ const STATUS_COLORS = {
 };
 const MILK_OPTIONS = ["Normal", "Vanilla", "Coconut", "Vanilla Soy", "Oat", "Almond", "Coconut Water"];
 const POT_OPTIONS  = ["Plastic", "Glass"];
+
+// Maps order.pot → inventory item name
+const POT_INV = {
+  "Plastic": "Pots Plastic",
+  "Glass":   "Pots Glass",
+};
 
 // Maps order.milk_type → inventory item name
 const MILK_INV = {
@@ -82,6 +88,9 @@ export default function Orders() {
   // Sticker
   const [stickerOrder, setStickerOrder] = useState(null);
 
+  // Inventory (for stock display in form)
+  const [inventory, setInventory] = useState([]);
+
   // Deduction modal
   const [dedOrder,   setDedOrder]   = useState(null);   // order being prepared
   const [dedItems,   setDedItems]   = useState([]);     // editable recipe
@@ -106,6 +115,10 @@ export default function Orders() {
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    getInventory().then((res) => setInventory(res.data)).catch(() => {});
+  }, []);
 
   // ── Filtered + sorted orders ──────────────────────────────────────────
   const displayed = (filterStatus === "All" ? orders : orders.filter((o) => o.status === filterStatus))
@@ -395,14 +408,22 @@ export default function Orders() {
                 <div className="form-group">
                   <label>Milk Type</label>
                   <select name="milk_type" value={formData.milk_type} onChange={handleFormChange}>
-                    {MILK_OPTIONS.map((m) => <option key={m}>{m}</option>)}
+                    {MILK_OPTIONS.map((m) => {
+                      const inv = inventory.find((i) => i.name === MILK_INV[m]);
+                      const stock = inv ? ` — ${inv.quantity} ${inv.unit} in stock` : "";
+                      return <option key={m} value={m}>{m}{stock}</option>;
+                    })}
                   </select>
                 </div>
 
                 <div className="form-group">
                   <label>Pot / Size</label>
                   <select name="pot" value={formData.pot} onChange={handleFormChange}>
-                    {POT_OPTIONS.map((p) => <option key={p}>{p}</option>)}
+                    {POT_OPTIONS.map((p) => {
+                      const inv = inventory.find((i) => i.name === POT_INV[p]);
+                      const stock = inv ? ` — ${inv.quantity} pcs in stock` : "";
+                      return <option key={p} value={p}>{p}{stock}</option>;
+                    })}
                   </select>
                 </div>
 

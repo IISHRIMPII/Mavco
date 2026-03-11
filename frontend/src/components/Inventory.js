@@ -5,7 +5,7 @@ import {
 } from "../api/client";
 
 const UNIT_OPTIONS = ["L", "kg", "g", "ml", "pcs", "pkt", "jar", "box", "roll"];
-const CATEGORIES = ["Containers", "Accessories", "Stickers", "Ingredients", "Other"];
+const CATEGORIES = ["Containers", "Accessories", "Stickers", "Ingredients", "Milk", "Pots", "Other"];
 const FILTER_TABS = ["All", ...CATEGORIES, "⚠️ Low Stock"];
 
 const EMPTY_FORM = {
