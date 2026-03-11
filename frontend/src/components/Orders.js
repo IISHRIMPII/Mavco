@@ -174,15 +174,21 @@ export default function Orders() {
       setFormError("Price is required.");
       return;
     }
+
+    if (formMode === "add") {
+      // For new orders: close form and show deduction modal first
+      setShowForm(false);
+      setDedOrder({ ...formData, id: null, _isNew: true });
+      setDedItems(buildRecipe(formData));
+      return;
+    }
+
+    // Edit mode: save directly, no deduction
     setSaving(true);
     setFormError(null);
     try {
       const payload = { ...formData, price: Number(formData.price), cost: Number(formData.cost || 0) };
-      if (formMode === "add") {
-        await createOrder(payload);
-      } else {
-        await updateOrder(editId, payload);
-      }
+      await updateOrder(editId, payload);
       setShowForm(false);
       await load();
     } catch (err) {
@@ -199,12 +205,6 @@ export default function Orders() {
   };
 
   const handleStatusChange = async (order, newStatus) => {
-    if (newStatus === "Preparing") {
-      // Show deduction confirmation modal instead of updating immediately
-      setDedOrder(order);
-      setDedItems(buildRecipe(order));
-      return;
-    }
     await updateOrder(order.id, { status: newStatus });
     await load();
   };
@@ -219,12 +219,22 @@ export default function Orders() {
     setDeducting(true);
     try {
       const itemsToDeduct = dedItems.filter((i) => i.amount > 0);
-      await deductInventory(itemsToDeduct);
-      await updateOrder(dedOrder.id, { status: "Preparing" });
+
+      if (dedOrder._isNew) {
+        // New order: create order then deduct
+        const payload = { ...dedOrder, price: Number(dedOrder.price), cost: Number(dedOrder.cost || 0) };
+        delete payload._isNew;
+        await createOrder(payload);
+        if (itemsToDeduct.length > 0) await deductInventory(itemsToDeduct);
+      } else {
+        // Existing order: just deduct
+        if (itemsToDeduct.length > 0) await deductInventory(itemsToDeduct);
+      }
+
       setDedOrder(null);
       await load();
     } catch (err) {
-      alert("Deduction failed: " + (err.response?.data?.error || err.message));
+      alert("Failed: " + (err.response?.data?.error || err.message));
     } finally {
       setDeducting(false);
     }
@@ -499,12 +509,13 @@ export default function Orders() {
         <div className="modal-overlay" onClick={() => setDedOrder(null)}>
           <div className="modal modal-deduct" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>📦 Deduct Inventory — Order #{dedOrder.id}</h2>
+              <h2>📦 {dedOrder._isNew ? "New Order — Deduct Inventory" : `Deduct Inventory — Order #${dedOrder.id}`}</h2>
               <button className="modal-close" onClick={() => setDedOrder(null)}>✕</button>
             </div>
             <p className="deduct-subtitle">
-              Moving <strong>{dedOrder.customer_name}</strong>'s order to{" "}
-              <strong>Preparing</strong>. Adjust amounts then confirm to deduct from stock.
+              {dedOrder._isNew
+                ? <>Order for <strong>{dedOrder.customer_name}</strong>. Adjust amounts then confirm to create the order and deduct from stock.</>
+                : <>Adjust amounts then confirm to deduct from stock.</>}
             </p>
             <div className="deduct-table-wrap">
               <table className="deduct-table">
@@ -537,7 +548,7 @@ export default function Orders() {
                 onClick={confirmDeduction}
                 disabled={deducting}
               >
-                {deducting ? "Deducting…" : "✓ Confirm & Prepare"}
+                {deducting ? "Saving…" : dedOrder._isNew ? "✓ Create Order & Deduct" : "✓ Confirm Deduction"}
               </button>
             </div>
           </div>
