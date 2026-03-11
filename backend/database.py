@@ -6,7 +6,9 @@ import sqlite3
 import os
 
 # Path to SQLite database file
-DB_PATH = os.path.join(os.path.dirname(__file__), "mavco.db")
+# On Railway: set DB_PATH env var to /data/mavco.db (persistent Volume mount)
+# Locally: defaults to the backend folder
+DB_PATH = os.environ.get("DB_PATH", os.path.join(os.path.dirname(__file__), "mavco.db"))
 
 
 def get_db():
