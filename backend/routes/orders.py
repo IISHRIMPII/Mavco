@@ -18,13 +18,18 @@ def row_to_dict(row):
 def get_orders():
     status = request.args.get("status")
     db = get_db()
+    order_clause = """
+        ORDER BY
+            CASE WHEN delivery_time IS NULL OR delivery_time = '' THEN 1 ELSE 0 END,
+            delivery_time ASC
+    """
     if status:
         rows = db.execute(
-            "SELECT * FROM orders WHERE status = ? ORDER BY created_at DESC", (status,)
+            f"SELECT * FROM orders WHERE status = ? {order_clause}", (status,)
         ).fetchall()
     else:
         rows = db.execute(
-            "SELECT * FROM orders ORDER BY created_at DESC"
+            f"SELECT * FROM orders {order_clause}"
         ).fetchall()
     db.close()
     return jsonify([dict(r) for r in rows])

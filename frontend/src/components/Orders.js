@@ -45,6 +45,19 @@ function buildRecipe(order) {
   ];
 }
 
+// Format a stored datetime-local string ("2026-03-12T15:00") for display
+function formatDelivery(dt) {
+  if (!dt) return "—";
+  try {
+    const d = new Date(dt);
+    if (isNaN(d.getTime())) return dt;
+    return d.toLocaleString("en-GB", {
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit", hour12: true,
+    });
+  } catch { return dt; }
+}
+
 const EMPTY_FORM = {
   customer_name: "", phone: "", location: "", delivery_time: "",
   milk_type: "Normal", pot: "Plastic", delivery_paid: false,
@@ -94,10 +107,15 @@ export default function Orders() {
 
   useEffect(() => { load(); }, [load]);
 
-  // ── Filtered orders ────────────────────────────────────────────────────
-  const displayed = filterStatus === "All"
-    ? orders
-    : orders.filter((o) => o.status === filterStatus);
+  // ── Filtered + sorted orders ──────────────────────────────────────────
+  const displayed = (filterStatus === "All" ? orders : orders.filter((o) => o.status === filterStatus))
+    .slice()
+    .sort((a, b) => {
+      if (!a.delivery_time && !b.delivery_time) return 0;
+      if (!a.delivery_time) return 1;
+      if (!b.delivery_time) return -1;
+      return a.delivery_time.localeCompare(b.delivery_time);
+    });
 
   // ── Form helpers ───────────────────────────────────────────────────────
   const openAdd = () => {
@@ -113,7 +131,7 @@ export default function Orders() {
       customer_name:  order.customer_name,
       phone:          order.phone || "",
       location:       order.location || "",
-      delivery_time:  order.delivery_time || "",
+      delivery_time:  order.delivery_time ? order.delivery_time.slice(0, 16) : "",
       milk_type:      order.milk_type || "Full Cream",
       pot:            order.pot || "Regular",
       delivery_paid:  !!order.delivery_paid,
@@ -271,7 +289,7 @@ export default function Orders() {
               <th>Customer</th>
               <th>Phone</th>
               <th>Location</th>
-              <th>Time</th>
+              <th>Delivery Date</th>
               <th>Milk</th>
               <th>Pot</th>
               <th>Price</th>
@@ -292,7 +310,7 @@ export default function Orders() {
                     <td><strong>{o.customer_name}</strong></td>
                     <td>{o.phone || "—"}</td>
                     <td className="location-cell">{o.location || "—"}</td>
-                    <td>{o.delivery_time || "—"}</td>
+                    <td>{formatDelivery(o.delivery_time)}</td>
                     <td>{o.milk_type}</td>
                     <td>{o.pot}</td>
                     <td>OMR {Number(o.price).toFixed(2)}</td>
@@ -364,7 +382,15 @@ export default function Orders() {
                 <Field label="Customer Name *" name="customer_name" value={formData.customer_name} onChange={handleFormChange} required />
                 <Field label="Phone"           name="phone"         value={formData.phone}         onChange={handleFormChange} />
                 <Field label="Location"        name="location"      value={formData.location}      onChange={handleFormChange} colSpan={2} />
-                <Field label="Delivery Time"   name="delivery_time" value={formData.delivery_time} onChange={handleFormChange} />
+                <div className="form-group">
+                  <label>Delivery Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    name="delivery_time"
+                    value={formData.delivery_time}
+                    onChange={handleFormChange}
+                  />
+                </div>
 
                 <div className="form-group">
                   <label>Milk Type</label>
