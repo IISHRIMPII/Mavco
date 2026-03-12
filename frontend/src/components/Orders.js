@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  getOrders, createOrder, updateOrder, deleteOrder, parseOrder, deductInventory, getInventory, getDrinks
+  getOrders, createOrder, updateOrder, deleteOrder, parseOrder, deductInventory, getInventory, getDrinks, resetOrders
 } from "../api/client";
 import OrderSticker from "./OrderSticker";
 
@@ -315,6 +315,18 @@ export default function Orders() {
           </button>
           <button className="btn btn-primary" onClick={openAdd}>
             + New Order
+          </button>
+          <button
+            className="btn btn-ghost"
+            style={{ color: "#e53e3e", borderColor:"#e53e3e" }}
+            onClick={async () => {
+              if (!window.confirm("⚠️ This will DELETE ALL orders and reset the order number back to 1. Are you sure?")) return;
+              if (!window.confirm("Last warning: all order history will be lost. Continue?")) return;
+              await resetOrders();
+              await load();
+            }}
+          >
+            🔄 Reset #
           </button>
         </div>
       </div>

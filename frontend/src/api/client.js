@@ -13,6 +13,7 @@ export const getOrder       = (id)     => api.get(`/orders/${id}`);
 export const createOrder    = (data)   => api.post("/orders", data);
 export const updateOrder    = (id, d)  => api.put(`/orders/${id}`, d);
 export const deleteOrder    = (id)     => api.delete(`/orders/${id}`);
+export const resetOrders    = ()       => api.post("/orders/reset");
 
 // ── Inventory ──────────────────────────────────────────────────────────────
 export const getInventory    = ()       => api.get("/inventory");

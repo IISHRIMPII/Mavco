@@ -13,6 +13,16 @@ def row_to_dict(row):
     return dict(row) if row else None
 
 
+def _next_order_id(db):
+    """Return the smallest positive integer not already used as an order ID."""
+    rows = db.execute("SELECT id FROM orders ORDER BY id").fetchall()
+    existing = {row[0] for row in rows}
+    candidate = 1
+    while candidate in existing:
+        candidate += 1
+    return candidate
+
+
 # ── GET all orders ──────────────────────────────────────────────────────────
 @orders_bp.route("/orders", methods=["GET"])
 def get_orders():
@@ -97,11 +107,12 @@ def create_order():
 
         cursor = db.execute("""
             INSERT INTO orders
-              (customer_name, phone, location, delivery_time, milk_type, pot,
+              (id, customer_name, phone, location, delivery_time, milk_type, pot,
                delivery_paid, notes, status, price, cost, drink_name, drink_id,
                created_at, updated_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))
         """, (
+            _next_order_id(db),
             data.get("customer_name"),
             data.get("phone", ""),
             data.get("location", ""),
@@ -183,3 +194,16 @@ def delete_order(order_id):
     db.commit()
     db.close()
     return jsonify({"message": f"Order {order_id} deleted."})
+
+
+# ── POST reset all orders ───────────────────────────────────────────────────
+@orders_bp.route("/orders/reset", methods=["POST"])
+def reset_orders():
+    db = get_db()
+    db.execute("DELETE FROM order_items")
+    db.execute("DELETE FROM orders")
+    # Reset SQLite auto-increment counter
+    db.execute("DELETE FROM sqlite_sequence WHERE name = 'orders'")
+    db.commit()
+    db.close()
+    return jsonify({"message": "All orders deleted and counter reset."})
