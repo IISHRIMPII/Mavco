@@ -73,45 +73,45 @@ export default function OrderSticker({ order, onClose }) {
           >
             {/* Row 1: Brand + order ID */}
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline" }}>
-              <span style={{ fontSize:"9pt", fontWeight:900, letterSpacing:"0.5px" }}>🥤 MAVCO</span>
-              <span style={{ fontSize:"6pt", color:"#888" }}>#{order.id}</span>
+              <span style={{ fontSize:"10pt", fontWeight:900, letterSpacing:"0.5px" }}>🥤 MAVCO</span>
+              <span style={{ fontSize:"7pt", color:"#333" }}>#{order.id}</span>
             </div>
 
-            <hr style={{ border:"none", borderTop:"1px dashed #bbb", margin:"1px 0" }} />
+            <hr style={{ border:"none", borderTop:"1px dashed #555", margin:"1px 0" }} />
 
             {/* Row 2: Name + Phone */}
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:"4px" }}>
-              <span style={{ fontWeight:900, fontSize:"8pt", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{order.customer_name}</span>
-              {order.phone && <span style={{ fontSize:"6pt", color:"#333", flexShrink:0 }}>📞 {order.phone}</span>}
+              <span style={{ fontWeight:900, fontSize:"9pt", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{order.customer_name}</span>
+              {order.phone && <span style={{ fontSize:"7pt", color:"#000", flexShrink:0 }}>📞 {order.phone}</span>}
             </div>
 
             {/* Row 3: Location + Delivery time */}
-            <div style={{ display:"flex", justifyContent:"space-between", gap:"4px", fontSize:"6pt", color:"#333" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", gap:"4px", fontSize:"7pt", color:"#000" }}>
               <span style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 {order.location ? `📍 ${order.location}` : ""}
               </span>
               {order.delivery_time && <span style={{ flexShrink:0 }}>🕐 {fmt(order.delivery_time)}</span>}
             </div>
 
-            <hr style={{ border:"none", borderTop:"1px dashed #bbb", margin:"1px 0" }} />
+            <hr style={{ border:"none", borderTop:"1px dashed #555", margin:"1px 0" }} />
 
             {/* Row 4: Drink + Pot */}
-            <div style={{ display:"flex", justifyContent:"space-between", gap:"4px", fontSize:"6.5pt" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", gap:"4px", fontSize:"7.5pt" }}>
               <span style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                <b>Drink:</b> {order.drink_name || order.milk_type || "—"}
+                <b>Drink:</b> {order.drink_name || "—"}
               </span>
               <span style={{ flexShrink:0 }}><b>Pot:</b> {order.pot}</span>
             </div>
 
             {/* Row 5: Price + Delivery paid */}
-            <div style={{ display:"flex", justifyContent:"space-between", gap:"4px", fontSize:"6.5pt" }}>
+            <div style={{ display:"flex", justifyContent:"space-between", gap:"4px", fontSize:"7.5pt" }}>
               <span><b>Price:</b> OMR {Number(order.price).toFixed(2)}</span>
               <span>{order.delivery_paid ? "✓ Delivery Paid" : "Delivery: Collect"}</span>
             </div>
 
             {/* Row 6: Notes (if any) */}
             {order.notes && (
-              <div style={{ fontSize:"6pt", color:"#444", borderTop:"1px dashed #bbb", paddingTop:"1px", marginTop:"1px",
+              <div style={{ fontSize:"7pt", color:"#222", borderTop:"1px dashed #555", paddingTop:"1px", marginTop:"1px",
                 overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 📝 {order.notes}
               </div>
