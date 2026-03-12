@@ -4,21 +4,21 @@
 
 /* ── CSS Variables ─────────────────────────────────────────────────────── */
 :root {
-  --bg:        #fdf6f8;
-  --surface:   #fff0f3;
-  --surface2:  #ffe4ea;
-  --border:    #f5c6d0;
-  --text:      #3b1c24;
-  --text-muted:#a06070;
+  --bg:        #3d1f28;
+  --surface:   #4e2733;
+  --surface2:  #5e303e;
+  --border:    #7a4050;
+  --text:      #f7e6ea;
+  --text-muted:#c49aaa;
   --primary:   #e87a90;
-  --primary-h: #d45f78;
+  --primary-h: #f0a0b4;
   --success:   #6dbf8b;
   --warning:   #f0a050;
   --danger:    #e05555;
   --blue:      #7aaee8;
   --purple:    #b07ad4;
   --radius:    12px;
-  --shadow:    0 4px 24px rgba(200,100,120,0.10);
+  --shadow:    0 4px 24px rgba(0,0,0,0.35);
   --nav-h:     64px;
 }
 
@@ -286,7 +286,7 @@ body {
 /* ── Modal ──────────────────────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed; inset: 0;
-  background: rgba(59,28,36,0.35); backdrop-filter: blur(4px);
+  background: rgba(20,8,12,0.65); backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center;
   z-index: 1000; padding: 1rem;
 }
