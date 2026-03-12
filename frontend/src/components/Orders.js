@@ -576,7 +576,7 @@ export default function Orders() {
                             <select
                               value={item.name}
                               onChange={(e) => handleDedItemChange(idx, "name", e.target.value)}
-                              style={{ width: "100%", background: "#1e293b", color: "#f1f5f9", border: "1px solid #334155", borderRadius: "6px", padding: "4px 8px" }}
+                              style={{ width: "100%", background: "var(--surface2)", color: "var(--text)", border: "1px solid var(--border)", borderRadius: "6px", padding: "4px 8px" }}
                             >
                               {inventory.filter((i) => i.category === "Milk").map((mi) => (
                                 <option key={mi.name} value={mi.name}>

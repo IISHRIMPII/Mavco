@@ -1,24 +1,24 @@
 /* ───────────────────────────────────────────────────────────────────────────
-   App.css  —  Mavco Beverage Box — iPad-Friendly Dark Theme
+   App.css  —  Mavco Beverage Box — Calm Pink Theme
 ─────────────────────────────────────────────────────────────────────────── */
 
 /* ── CSS Variables ─────────────────────────────────────────────────────── */
 :root {
-  --bg:        #0f0f1a;
-  --surface:   #1a1a2e;
-  --surface2:  #22223b;
-  --border:    #2d2d4e;
-  --text:      #e8e8f0;
-  --text-muted:#9090b0;
-  --primary:   #6366f1;
-  --primary-h: #818cf8;
-  --success:   #10b981;
-  --warning:   #f59e0b;
-  --danger:    #ef4444;
-  --blue:      #3b82f6;
-  --purple:    #8b5cf6;
+  --bg:        #fdf6f8;
+  --surface:   #fff0f3;
+  --surface2:  #ffe4ea;
+  --border:    #f5c6d0;
+  --text:      #3b1c24;
+  --text-muted:#a06070;
+  --primary:   #e87a90;
+  --primary-h: #d45f78;
+  --success:   #6dbf8b;
+  --warning:   #f0a050;
+  --danger:    #e05555;
+  --blue:      #7aaee8;
+  --purple:    #b07ad4;
   --radius:    12px;
-  --shadow:    0 4px 24px rgba(0,0,0,0.4);
+  --shadow:    0 4px 24px rgba(200,100,120,0.10);
   --nav-h:     64px;
 }
 
@@ -286,7 +286,7 @@ body {
 /* ── Modal ──────────────────────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+  background: rgba(59,28,36,0.35); backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center;
   z-index: 1000; padding: 1rem;
 }
