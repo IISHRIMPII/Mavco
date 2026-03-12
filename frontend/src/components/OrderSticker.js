@@ -33,9 +33,9 @@ export default function OrderSticker({ order, onClose }) {
       <!DOCTYPE html><html><head>
         <title>Order #${order.id}</title>
         <style>
-          @page { size: 60mm 30mm; margin: 0; }
+          @page { size: 60mm 40mm; margin: 0; }
           * { margin:0; padding:0; box-sizing:border-box; }
-          body { font-family: Arial, Helvetica, sans-serif; background:#fff; width:60mm; height:30mm; overflow:hidden; }
+          body { font-family: Arial, Helvetica, sans-serif; background:#fff; width:60mm; height:40mm; overflow:hidden; }
         </style>
       </head>
       <body>${content}</body></html>
@@ -59,7 +59,7 @@ export default function OrderSticker({ order, onClose }) {
             ref={stickerRef}
             style={{
               width: "227px",
-              height: "113px",
+              height: "151px",
               overflow: "hidden",
               background: "#fff",
               color: "#000",
@@ -111,8 +111,8 @@ export default function OrderSticker({ order, onClose }) {
 
             {/* Row 6: Notes (if any) */}
             {order.notes && (
-              <div style={{ fontSize:"7pt", color:"#222", borderTop:"1px dashed #555", paddingTop:"1px", marginTop:"1px",
-                overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+              <div style={{ fontSize:"7pt", color:"#222", borderTop:"1px dashed #555", paddingTop:"2px", marginTop:"2px",
+                whiteSpace:"pre-wrap", wordBreak:"break-word" }}>
                 📝 {order.notes}
               </div>
             )}
