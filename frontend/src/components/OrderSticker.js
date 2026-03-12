@@ -1,4 +1,4 @@
-// src/components/OrderSticker.js  — Thermal label sticker (48mm wide, We Print compatible)
+// src/components/OrderSticker.js  — Thermal label sticker (60mm × 30mm, We Print compatible)
 import React, { useRef } from "react";
 import html2canvas from "html2canvas";
 
@@ -28,23 +28,14 @@ export default function OrderSticker({ order, onClose }) {
   // Browser print fallback (works on desktop)
   const handlePrint = () => {
     const content = stickerRef.current.innerHTML;
-    const win = window.open("", "_blank", "width=250,height=600");
+    const win = window.open("", "_blank", "width=280,height=160");
     win.document.write(`
       <!DOCTYPE html><html><head>
         <title>Order #${order.id}</title>
         <style>
-          @page { size: 48mm auto; margin: 0; }
+          @page { size: 60mm 30mm; margin: 0; }
           * { margin:0; padding:0; box-sizing:border-box; }
-          body { font-family: Arial, Helvetica, sans-serif; background:#fff; width:48mm; }
-          .sticker { width:48mm; padding:3mm 3.5mm; font-size:8pt; }
-          .brand { text-align:center; font-size:13pt; font-weight:900; letter-spacing:1px; margin-bottom:2mm; }
-          .order-id { text-align:center; font-size:7pt; color:#555; margin-bottom:2mm; }
-          hr { border:none; border-top:1px dashed #999; margin:2mm 0; }
-          .row { display:flex; justify-content:space-between; gap:2mm; margin-bottom:1.2mm; font-size:8pt; }
-          .row .label { font-weight:700; flex-shrink:0; }
-          .name-row { font-size:10pt; font-weight:900; margin-bottom:1.5mm; }
-          .footer { text-align:center; font-size:6.5pt; color:#888; margin-top:2mm; }
-          .notes-box { background:#f5f5f5; border-radius:2mm; padding:1.5mm; font-size:7.5pt; margin-top:1mm; }
+          body { font-family: Arial, Helvetica, sans-serif; background:#fff; width:60mm; height:30mm; overflow:hidden; }
         </style>
       </head>
       <body>${content}</body></html>
@@ -62,52 +53,66 @@ export default function OrderSticker({ order, onClose }) {
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
 
-        {/* Sticker preview — fixed 48mm width rendered at screen scale */}
+        {/* Sticker preview — 60mm × 30mm @ 96dpi = 227 × 113px */}
         <div style={{ display:"flex", justifyContent:"center", padding:"0.75rem 0", background:"#e5e7eb", borderRadius:"8px", margin:"0 1.5rem" }}>
           <div
             ref={stickerRef}
             style={{
-              width: "181px", /* 48mm @ 96dpi */
+              width: "227px",
+              height: "113px",
+              overflow: "hidden",
               background: "#fff",
               color: "#000",
               fontFamily: "Arial, Helvetica, sans-serif",
-              padding: "6px 8px",
+              padding: "4px 6px",
               boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1px",
             }}
           >
-            {/* Brand + order ID on one line */}
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:"3px" }}>
-              <span style={{ fontSize:"11pt", fontWeight:900, letterSpacing:"0.5px" }}>🥤 MAVCO</span>
-              <span style={{ fontSize:"6pt", color:"#666" }}>#{order.id}</span>
-            </div>
-            <hr style={{ border:"none", borderTop:"1px dashed #aaa", margin:"3px 0" }} />
-
-            {/* Customer name */}
-            <div style={{ fontWeight:900, fontSize:"9pt", marginBottom:"2px" }}>
-              {order.customer_name}
+            {/* Row 1: Brand + order ID */}
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline" }}>
+              <span style={{ fontSize:"9pt", fontWeight:900, letterSpacing:"0.5px" }}>🥤 MAVCO</span>
+              <span style={{ fontSize:"6pt", color:"#888" }}>#{order.id}</span>
             </div>
 
-            {/* Phone + location on same line if both exist */}
-            <div style={{ fontSize:"7pt", color:"#333", marginBottom:"1px" }}>
-              {order.phone && <span>📞 {order.phone}</span>}
-              {order.phone && order.location && <span>  </span>}
-              {order.location && <span>📍 {order.location}</span>}
+            <hr style={{ border:"none", borderTop:"1px dashed #bbb", margin:"1px 0" }} />
+
+            {/* Row 2: Name + Phone */}
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:"4px" }}>
+              <span style={{ fontWeight:900, fontSize:"8pt", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{order.customer_name}</span>
+              {order.phone && <span style={{ fontSize:"6pt", color:"#333", flexShrink:0 }}>📞 {order.phone}</span>}
             </div>
-            {order.delivery_time && (
-              <div style={{ fontSize:"7pt", color:"#333", marginBottom:"2px" }}>🕐 {fmt(order.delivery_time)}</div>
-            )}
 
-            <hr style={{ border:"none", borderTop:"1px dashed #aaa", margin:"3px 0" }} />
+            {/* Row 3: Location + Delivery time */}
+            <div style={{ display:"flex", justifyContent:"space-between", gap:"4px", fontSize:"6pt", color:"#333" }}>
+              <span style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                {order.location ? `📍 ${order.location}` : ""}
+              </span>
+              {order.delivery_time && <span style={{ flexShrink:0 }}>🕐 {fmt(order.delivery_time)}</span>}
+            </div>
 
-            {/* Order details — two columns */}
-            <Row label="Drink"    value={order.drink_name || order.milk_type || "—"} />
-            <Row label="Pot"      value={order.pot} />
-            <Row label="Price"    value={`OMR ${Number(order.price).toFixed(2)}`} bold />
-            <Row label="Delivery" value={order.delivery_paid ? "✓ Paid" : "Collect"} />
+            <hr style={{ border:"none", borderTop:"1px dashed #bbb", margin:"1px 0" }} />
 
-            {/* Notes */}
+            {/* Row 4: Drink + Pot */}
+            <div style={{ display:"flex", justifyContent:"space-between", gap:"4px", fontSize:"6.5pt" }}>
+              <span style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                <b>Drink:</b> {order.drink_name || order.milk_type || "—"}
+              </span>
+              <span style={{ flexShrink:0 }}><b>Pot:</b> {order.pot}</span>
+            </div>
+
+            {/* Row 5: Price + Delivery paid */}
+            <div style={{ display:"flex", justifyContent:"space-between", gap:"4px", fontSize:"6.5pt" }}>
+              <span><b>Price:</b> OMR {Number(order.price).toFixed(2)}</span>
+              <span>{order.delivery_paid ? "✓ Delivery Paid" : "Delivery: Collect"}</span>
+            </div>
+
+            {/* Row 6: Notes (if any) */}
             {order.notes && (
-              <div style={{ fontSize:"6.5pt", borderTop:"1px dashed #aaa", marginTop:"3px", paddingTop:"2px", color:"#444" }}>
+              <div style={{ fontSize:"6pt", color:"#444", borderTop:"1px dashed #bbb", paddingTop:"1px", marginTop:"1px",
+                overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
                 📝 {order.notes}
               </div>
             )}
@@ -128,11 +133,3 @@ export default function OrderSticker({ order, onClose }) {
   );
 }
 
-function Row({ label, value, bold }) {
-  return (
-    <div style={{ display:"flex", justifyContent:"space-between", gap:"4px", marginBottom:"1px", fontSize:"7pt" }}>
-      <span style={{ fontWeight:700, flexShrink:0 }}>{label}</span>
-      <span style={{ textAlign:"right", fontWeight: bold ? 700 : 400 }}>{value}</span>
-    </div>
-  );
-}
