@@ -4,21 +4,21 @@
 
 /* ── CSS Variables ─────────────────────────────────────────────────────── */
 :root {
-  --bg:        #3d1f28;
-  --surface:   #4e2733;
-  --surface2:  #5e303e;
-  --border:    #7a4050;
-  --text:      #f7e6ea;
-  --text-muted:#c49aaa;
-  --primary:   #e87a90;
-  --primary-h: #f0a0b4;
-  --success:   #6dbf8b;
-  --warning:   #f0a050;
-  --danger:    #e05555;
-  --blue:      #7aaee8;
-  --purple:    #b07ad4;
+  --bg:        #FFC0CB;
+  --surface:   #ffd6de;
+  --surface2:  #ffe8ed;
+  --border:    #f0a0b0;
+  --text:      #3b1c24;
+  --text-muted:#a05060;
+  --primary:   #c94f6a;
+  --primary-h: #e0758a;
+  --success:   #3a9e68;
+  --warning:   #d4860a;
+  --danger:    #c93030;
+  --blue:      #4a85c9;
+  --purple:    #8a5ab8;
   --radius:    12px;
-  --shadow:    0 4px 24px rgba(0,0,0,0.35);
+  --shadow:    0 4px 24px rgba(180,80,100,0.15);
   --nav-h:     64px;
 }
 
@@ -286,7 +286,7 @@ body {
 /* ── Modal ──────────────────────────────────────────────────────────────── */
 .modal-overlay {
   position: fixed; inset: 0;
-  background: rgba(20,8,12,0.65); backdrop-filter: blur(4px);
+  background: rgba(80,20,35,0.4); backdrop-filter: blur(4px);
   display: flex; align-items: center; justify-content: center;
   z-index: 1000; padding: 1rem;
 }
