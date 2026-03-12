@@ -365,7 +365,7 @@ export default function Orders() {
                     <td>{o.phone || "—"}</td>
                     <td className="location-cell">{o.location || "—"}</td>
                     <td>{formatDelivery(o.delivery_time)}</td>
-                    <td>{o.drink_name || o.milk_type || "—"}</td>
+                    <td>{o.drink_name || "—"}</td>
                     <td>{o.pot}</td>
                     <td>OMR {Number(o.price).toFixed(2)}</td>
                     <td className={o.profit >= 0 ? "profit-pos" : "profit-neg"}>

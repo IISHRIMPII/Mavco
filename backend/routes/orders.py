@@ -98,20 +98,23 @@ def create_order():
         cursor = db.execute("""
             INSERT INTO orders
               (customer_name, phone, location, delivery_time, milk_type, pot,
-               delivery_paid, notes, status, price, cost, created_at, updated_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))
+               delivery_paid, notes, status, price, cost, drink_name, drink_id,
+               created_at, updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,datetime('now'),datetime('now'))
         """, (
             data.get("customer_name"),
             data.get("phone", ""),
             data.get("location", ""),
             data.get("delivery_time", ""),
-            data.get("milk_type", "Normal"),
+            data.get("milk_type", ""),
             data.get("pot", "Plastic"),
             1 if data.get("delivery_paid") else 0,
             data.get("notes", ""),
             data.get("status", "New"),
             price,
             cost,
+            data.get("drink_name", ""),
+            data.get("drink_id") or None,
         ))
         order_id = cursor.lastrowid
 
@@ -149,7 +152,8 @@ def update_order(order_id):
     # Build dynamic UPDATE
     allowed_fields = [
         "customer_name", "phone", "location", "delivery_time",
-        "milk_type", "pot", "delivery_paid", "notes", "status", "price", "cost"
+        "milk_type", "pot", "delivery_paid", "notes", "status", "price", "cost",
+        "drink_name", "drink_id"
     ]
     updates = {k: v for k, v in data.items() if k in allowed_fields}
     if not updates:
