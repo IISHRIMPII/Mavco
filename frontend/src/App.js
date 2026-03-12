@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
 import Dashboard  from "./components/Dashboard";
 import Orders     from "./components/Orders";
 import Inventory  from "./components/Inventory";
+import Drinks     from "./components/Drinks";
 
 export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -27,8 +28,9 @@ export default function App() {
           </button>
           <ul className={`nav-links ${menuOpen ? "open" : ""}`}>
             {[
-              { to: "/",          label: "📊 Dashboard" },
+                          { to: "/",          label: "📊 Dashboard" },
               { to: "/orders",    label: "📦 Orders"    },
+              { to: "/drinks",    label: "🍵 Drinks"    },
               { to: "/inventory", label: "🗂 Inventory" },
             ].map(({ to, label }) => (
               <li key={to}>
@@ -48,8 +50,9 @@ export default function App() {
         {/* ── Pages ──────────────────────────────────────────────────── */}
         <main className="main-content">
           <Routes>
-            <Route path="/"          element={<Dashboard />} />
+                        <Route path="/"          element={<Dashboard />} />
             <Route path="/orders"    element={<Orders />}    />
+            <Route path="/drinks"    element={<Drinks />}    />
             <Route path="/inventory" element={<Inventory />} />
           </Routes>
         </main>

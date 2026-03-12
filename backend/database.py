@@ -59,6 +59,27 @@ def init_db():
         )
     """)
 
+    # ── Drinks ──────────────────────────────────────────────────────────────
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS drinks (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            name        TEXT    NOT NULL UNIQUE,
+            notes       TEXT    DEFAULT '',
+            active      INTEGER DEFAULT 1,
+            created_at  TEXT    NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+
+    # ── Drink Recipes (each row = one ingredient for one drink) ────────────
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS drink_recipes (
+            id             INTEGER PRIMARY KEY AUTOINCREMENT,
+            drink_id       INTEGER NOT NULL REFERENCES drinks(id) ON DELETE CASCADE,
+            inventory_name TEXT    NOT NULL,
+            amount         REAL    NOT NULL DEFAULT 1
+        )
+    """)
+
     # ── Order Items (optional recipe-based deduction) ──────────────────────
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS order_items (
@@ -73,3 +94,16 @@ def init_db():
     conn.commit()
     conn.close()
     print("[DB] Tables initialized.")
+
+    # ── Migrations: add columns to existing tables safely ─────────────────
+    conn = get_db()
+    for sql in [
+        "ALTER TABLE orders ADD COLUMN drink_name TEXT DEFAULT ''",
+        "ALTER TABLE orders ADD COLUMN drink_id   INTEGER DEFAULT NULL",
+    ]:
+        try:
+            conn.execute(sql)
+            conn.commit()
+        except Exception:
+            pass  # Column already exists
+    conn.close()

@@ -28,4 +28,11 @@ export const getProfit      = (period) => api.get("/profit", { params: { period 
 // ── Parse Order ────────────────────────────────────────────────────────────
 export const parseOrder     = (text)   => api.post("/parse_order", { text });
 
+// ── Drinks ─────────────────────────────────────────────────────────────────
+export const getDrinks      = ()       => api.get("/drinks");
+export const getDrink       = (id)     => api.get(`/drinks/${id}`);
+export const createDrink    = (data)   => api.post("/drinks", data);
+export const updateDrink    = (id, d)  => api.put(`/drinks/${id}`, d);
+export const deleteDrink    = (id)     => api.delete(`/drinks/${id}`);
+
 export default api;

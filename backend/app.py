@@ -7,19 +7,21 @@ from flask import Flask
 from flask_cors import CORS
 
 from database import init_db
-from routes.orders     import orders_bp
-from routes.inventory  import inventory_bp
-from routes.profit     import profit_bp
+from routes.orders      import orders_bp
+from routes.inventory   import inventory_bp
+from routes.profit      import profit_bp
 from routes.parse_order import parse_order_bp
+from routes.drinks      import drinks_bp
 
 app = Flask(__name__)
-CORS(app)  # Allow cross-origin requests from React dev server
+CORS(app)
 
-# ── Register blueprints ────────────────────────────────────────────────────
+# ── Register blueprints ────────────────────────────────────────────
 app.register_blueprint(orders_bp,      url_prefix="/api")
 app.register_blueprint(inventory_bp,   url_prefix="/api")
 app.register_blueprint(profit_bp,      url_prefix="/api")
 app.register_blueprint(parse_order_bp, url_prefix="/api")
+app.register_blueprint(drinks_bp,      url_prefix="/api")
 
 
 @app.route("/api/health")

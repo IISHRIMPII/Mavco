@@ -422,3 +422,37 @@ body {
   .action-cell { flex-direction: column; gap: 0.3rem; }
   .btn-sm { width: 100%; justify-content: center; }
 }
+
+/* -- Drinks Page ----------------------------------------------------------- */
+.drinks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+.drink-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+.drink-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.drink-card-header h3 { margin: 0; font-size: 1.05rem; }
+.drink-card-actions { display: flex; gap: 0.4rem; }
+.drink-notes { color: #94a3b8; font-size: 0.85rem; margin: 0.25rem 0 0.75rem; }
+.drink-recipe { margin-top: 0.75rem; }
+.recipe-list { list-style: none; padding: 0; margin: 0.4rem 0 0; }
+.recipe-list li {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.3rem 0; border-bottom: 1px solid var(--border); font-size: 0.88rem;
+}
+.recipe-name { flex: 1; }
+.recipe-amount { color: #94a3b8; }
+.recipe-stock { font-size: 0.8rem; color: #64748b; }
+.recipe-stock.low { color: #f59e0b; font-weight: 600; }
+.modal-drinks { max-width: 580px; }

@@ -46,6 +46,34 @@ INVENTORY = [
 # No sample orders – start fresh
 ORDERS = []
 
+DRINKS = [
+    {
+        "name": "Signature Matcha",
+        "notes": "Classic matcha with milk",
+        "recipe": [
+            {"inventory_name": "Matcha Powder", "amount": 15},
+            {"inventory_name": "Oat Milk",      "amount": 1},
+        ]
+    },
+    {
+        "name": "Cloudy Matcha",
+        "notes": "Matcha with Dream Web Mix",
+        "recipe": [
+            {"inventory_name": "Matcha Powder", "amount": 15},
+            {"inventory_name": "Dream Web Mix", "amount": 20},
+            {"inventory_name": "Oat Milk",      "amount": 1},
+        ]
+    },
+    {
+        "name": "Pure Matcha",
+        "notes": "Matcha with water only",
+        "recipe": [
+            {"inventory_name": "Matcha Powder", "amount": 15},
+            {"inventory_name": "Water",         "amount": 1},
+        ]
+    },
+]
+
 
 def seed():
     init_db()
@@ -83,6 +111,24 @@ def seed():
         print(f"[Seed] Inserted {len(ORDERS)} orders.")
     else:
         print("[Seed] Orders already populated, skipping.")
+
+    # Seed drinks if none exist yet
+    existing_drinks = db.execute("SELECT COUNT(*) as c FROM drinks").fetchone()["c"]
+    if existing_drinks == 0:
+        for d in DRINKS:
+            cur = db.execute(
+                "INSERT INTO drinks (name, notes, active) VALUES (?, ?, 1)",
+                (d["name"], d.get("notes", ""))
+            )
+            drink_id = cur.lastrowid
+            for item in d.get("recipe", []):
+                db.execute(
+                    "INSERT INTO drink_recipes (drink_id, inventory_name, amount) VALUES (?, ?, ?)",
+                    (drink_id, item["inventory_name"], item["amount"])
+                )
+        print(f"[Seed] Inserted {len(DRINKS)} drinks.")
+    else:
+        print("[Seed] Drinks already populated, skipping.")
 
     db.commit()
     db.close()

@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  getOrders, createOrder, updateOrder, deleteOrder, parseOrder, deductInventory, getInventory
+  getOrders, createOrder, updateOrder, deleteOrder, parseOrder, deductInventory, getInventory, getDrinks
 } from "../api/client";
 import OrderSticker from "./OrderSticker";
 
@@ -14,7 +14,6 @@ const STATUS_COLORS = {
   Delivered: "#8b5cf6",
 };
 // Legacy fallback: maps old short names → inventory item names
-// (keeps existing orders working that stored "Oat" instead of "Oat Milk")
 const MILK_INV_FALLBACK = {
   "Normal":       "Normal Milk",
   "Vanilla":      "Vanilla Milk",
@@ -27,12 +26,34 @@ const MILK_INV_FALLBACK = {
   "Glass":        "Pots Glass",
 };
 
-// Resolve a value that may be a full inventory name OR a legacy short name
 function resolveInvName(value) {
   return MILK_INV_FALLBACK[value] || value;
 }
 
-function buildRecipe(order) {
+// Build recipe from a drink object (from DB) + the selected pot
+function buildRecipeFromDrink(drink, pot) {
+  const base = [
+    { name: "1L Bottle",         amount: 1 },
+    { name: "Foam 500ml Bottle", amount: 1 },
+    { name: resolveInvName(pot), amount: 1 },
+    { name: "Cups",              amount: 7 },
+    { name: "Pags (Bags)",       amount: 1 },
+    { name: "Straws",            amount: 7 },
+    { name: "Wooden Spoons",     amount: 1 },
+    { name: "1L Bottle Sticker", amount: 1 },
+    { name: "Cups Sticker",      amount: 7 },
+    { name: "Foam Sticker",      amount: 1 },
+    { name: "Givaway Sticker",   amount: 1 },
+    { name: "Packaging Sticker", amount: 1 },
+  ];
+  const drinkItems = drink
+    ? drink.recipe.map((r) => ({ name: r.inventory_name, amount: r.amount }))
+    : [];
+  return [...base, ...drinkItems];
+}
+
+// Legacy fallback for orders that pre-date the drinks system
+function buildRecipeLegacy(order) {
   return [
     { name: "1L Bottle",         amount: 1 },
     { name: "Foam 500ml Bottle", amount: 1 },
@@ -65,7 +86,7 @@ function formatDelivery(dt) {
 
 const EMPTY_FORM = {
   customer_name: "", phone: "", location: "", delivery_time: "",
-  milk_type: "", pot: "", delivery_paid: false,
+  drink_id: "", drink_name: "", pot: "", delivery_paid: false,
   notes: "", status: "New", price: "", cost: "",
 };
 
@@ -87,8 +108,9 @@ export default function Orders() {
   // Sticker
   const [stickerOrder, setStickerOrder] = useState(null);
 
-  // Inventory (for stock display in form)
+  // Inventory and drinks (for form + deduction)
   const [inventory, setInventory] = useState([]);
+  const [drinks,    setDrinks]    = useState([]);
 
   // Deduction modal
   const [dedOrder,   setDedOrder]   = useState(null);   // order being prepared
@@ -117,6 +139,7 @@ export default function Orders() {
 
   useEffect(() => {
     getInventory().then((res) => setInventory(res.data)).catch(() => {});
+    getDrinks().then((res) => setDrinks(res.data)).catch(() => {});
   }, []);
 
   // ── Filtered + sorted orders ──────────────────────────────────────────
@@ -131,12 +154,13 @@ export default function Orders() {
 
   // ── Form helpers ───────────────────────────────────────────────────────
   const openAdd = () => {
-    const milkItems = inventory.filter((i) => i.category === "Milk");
-    const potItems  = inventory.filter((i) => i.category === "Pots");
+    const potItems = inventory.filter((i) => i.category === "Pots");
+    const firstDrink = drinks[0];
     setFormData({
       ...EMPTY_FORM,
-      milk_type: milkItems[0]?.name || "",
-      pot:       potItems[0]?.name  || "",
+      pot:        potItems[0]?.name || "",
+      drink_id:   firstDrink?.id    || "",
+      drink_name: firstDrink?.name  || "",
     });
     setEditId(null);
     setFormMode("add");
@@ -150,8 +174,9 @@ export default function Orders() {
       phone:          order.phone || "",
       location:       order.location || "",
       delivery_time:  order.delivery_time ? order.delivery_time.slice(0, 16) : "",
-      milk_type:      order.milk_type || "Full Cream",
-      pot:            order.pot || "Regular",
+      drink_id:       order.drink_id   || "",
+      drink_name:     order.drink_name || order.milk_type || "",
+      pot:            order.pot || "",
       delivery_paid:  !!order.delivery_paid,
       notes:          order.notes || "",
       status:         order.status,
@@ -182,9 +207,10 @@ export default function Orders() {
 
     if (formMode === "add") {
       // For new orders: close form and show deduction modal first
+      const selectedDrink = drinks.find((d) => String(d.id) === String(formData.drink_id)) || null;
       setShowForm(false);
       setDedOrder({ ...formData, id: null, _isNew: true });
-      setDedItems(buildRecipe(formData));
+      setDedItems(buildRecipeFromDrink(selectedDrink, formData.pot));
       return;
     }
 
@@ -214,9 +240,9 @@ export default function Orders() {
     await load();
   };
 
-  const handleDedItemChange = (idx, value) => {
+  const handleDedItemChange = (idx, field, value) => {
     setDedItems((prev) => prev.map((item, i) =>
-      i === idx ? { ...item, amount: parseFloat(value) || 0 } : item
+      i === idx ? { ...item, [field]: field === "amount" ? (parseFloat(value) || 0) : value } : item
     ));
   };
 
@@ -318,7 +344,7 @@ export default function Orders() {
               <th>Phone</th>
               <th>Location</th>
               <th>Delivery Date</th>
-              <th>Milk</th>
+              <th>Drink</th>
               <th>Pot</th>
               <th>Price</th>
               <th>Profit</th>
@@ -339,7 +365,7 @@ export default function Orders() {
                     <td>{o.phone || "—"}</td>
                     <td className="location-cell">{o.location || "—"}</td>
                     <td>{formatDelivery(o.delivery_time)}</td>
-                    <td>{o.milk_type}</td>
+                    <td>{o.drink_name || o.milk_type || "—"}</td>
                     <td>{o.pot}</td>
                     <td>OMR {Number(o.price).toFixed(2)}</td>
                     <td className={o.profit >= 0 ? "profit-pos" : "profit-neg"}>
@@ -421,16 +447,23 @@ export default function Orders() {
                 </div>
 
                 <div className="form-group">
-                  <label>Milk Type</label>
-                  <select name="milk_type" value={formData.milk_type} onChange={handleFormChange}>
-                    {inventory.filter((i) => i.category === "Milk").map((item) => (
-                      <option key={item.name} value={item.name}>
-                        {item.name} — {item.quantity} {item.unit} in stock
-                      </option>
+                  <label>Drink *</label>
+                  <select
+                    name="drink_id"
+                    value={formData.drink_id}
+                    onChange={(e) => {
+                      const d = drinks.find((d) => String(d.id) === e.target.value);
+                      setFormData((f) => ({
+                        ...f,
+                        drink_id:   e.target.value,
+                        drink_name: d?.name || "",
+                      }));
+                    }}
+                  >
+                    <option value="">— select drink —</option>
+                    {drinks.map((d) => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
                     ))}
-                    {inventory.filter((i) => i.category === "Milk").length === 0 && (
-                      <option value="">Loading…</option>
-                    )}
                   </select>
                 </div>
 
@@ -534,21 +567,40 @@ export default function Orders() {
                   <tr><th>Inventory Item</th><th>Deduct Amount</th></tr>
                 </thead>
                 <tbody>
-                  {dedItems.map((item, idx) => (
-                    <tr key={item.name}>
-                      <td>{item.name}</td>
-                      <td>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.5"
-                          value={item.amount}
-                          onChange={(e) => handleDedItemChange(idx, e.target.value)}
-                          className="deduct-qty-input"
-                        />
-                      </td>
-                    </tr>
-                  ))}
+                  {dedItems.map((item, idx) => {
+                    const isMilk = inventory.some((i) => i.name === item.name && i.category === "Milk");
+                    return (
+                      <tr key={idx}>
+                        <td>
+                          {isMilk ? (
+                            <select
+                              value={item.name}
+                              onChange={(e) => handleDedItemChange(idx, "name", e.target.value)}
+                              style={{ width: "100%", background: "#1e293b", color: "#f1f5f9", border: "1px solid #334155", borderRadius: "6px", padding: "4px 8px" }}
+                            >
+                              {inventory.filter((i) => i.category === "Milk").map((mi) => (
+                                <option key={mi.name} value={mi.name}>
+                                  {mi.name} ({mi.quantity} {mi.unit} in stock)
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            item.name
+                          )}
+                        </td>
+                        <td>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.5"
+                            value={item.amount}
+                            onChange={(e) => handleDedItemChange(idx, "amount", e.target.value)}
+                            className="deduct-qty-input"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
