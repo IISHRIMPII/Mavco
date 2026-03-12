@@ -13,17 +13,9 @@ const STATUS_COLORS = {
   Ready:     "#10b981",
   Delivered: "#8b5cf6",
 };
-const MILK_OPTIONS = ["Normal", "Vanilla", "Coconut", "Vanilla Soy", "Oat", "Almond", "Coconut Water"];
-const POT_OPTIONS  = ["Plastic", "Glass"];
-
-// Maps order.pot → inventory item name
-const POT_INV = {
-  "Plastic": "Pots Plastic",
-  "Glass":   "Pots Glass",
-};
-
-// Maps order.milk_type → inventory item name
-const MILK_INV = {
+// Legacy fallback: maps old short names → inventory item names
+// (keeps existing orders working that stored "Oat" instead of "Oat Milk")
+const MILK_INV_FALLBACK = {
   "Normal":       "Normal Milk",
   "Vanilla":      "Vanilla Milk",
   "Coconut":      "Coconut Milk",
@@ -31,13 +23,20 @@ const MILK_INV = {
   "Oat":          "Oat Milk",
   "Almond":       "Almond Milk",
   "Coconut Water":"Coconut Water",
+  "Plastic":      "Pots Plastic",
+  "Glass":        "Pots Glass",
 };
+
+// Resolve a value that may be a full inventory name OR a legacy short name
+function resolveInvName(value) {
+  return MILK_INV_FALLBACK[value] || value;
+}
 
 function buildRecipe(order) {
   return [
     { name: "1L Bottle",         amount: 1 },
     { name: "Foam 500ml Bottle", amount: 1 },
-    { name: order.pot === "Glass" ? "Pots Glass" : "Pots Plastic", amount: 1 },
+    { name: resolveInvName(order.pot),       amount: 1 },
     { name: "Cups",              amount: 7 },
     { name: "Pags (Bags)",       amount: 1 },
     { name: "Straws",            amount: 7 },
@@ -47,7 +46,7 @@ function buildRecipe(order) {
     { name: "Foam Sticker",      amount: 1 },
     { name: "Givaway Sticker",   amount: 1 },
     { name: "Packaging Sticker", amount: 1 },
-    { name: MILK_INV[order.milk_type] || "Normal Milk", amount: 1 },
+    { name: resolveInvName(order.milk_type), amount: 1 },
   ];
 }
 
@@ -66,7 +65,7 @@ function formatDelivery(dt) {
 
 const EMPTY_FORM = {
   customer_name: "", phone: "", location: "", delivery_time: "",
-  milk_type: "Normal", pot: "Plastic", delivery_paid: false,
+  milk_type: "", pot: "", delivery_paid: false,
   notes: "", status: "New", price: "", cost: "",
 };
 
@@ -132,7 +131,13 @@ export default function Orders() {
 
   // ── Form helpers ───────────────────────────────────────────────────────
   const openAdd = () => {
-    setFormData(EMPTY_FORM);
+    const milkItems = inventory.filter((i) => i.category === "Milk");
+    const potItems  = inventory.filter((i) => i.category === "Pots");
+    setFormData({
+      ...EMPTY_FORM,
+      milk_type: milkItems[0]?.name || "",
+      pot:       potItems[0]?.name  || "",
+    });
     setEditId(null);
     setFormMode("add");
     setFormError(null);
@@ -418,22 +423,28 @@ export default function Orders() {
                 <div className="form-group">
                   <label>Milk Type</label>
                   <select name="milk_type" value={formData.milk_type} onChange={handleFormChange}>
-                    {MILK_OPTIONS.map((m) => {
-                      const inv = inventory.find((i) => i.name === MILK_INV[m]);
-                      const stock = inv ? ` — ${inv.quantity} ${inv.unit} in stock` : "";
-                      return <option key={m} value={m}>{m}{stock}</option>;
-                    })}
+                    {inventory.filter((i) => i.category === "Milk").map((item) => (
+                      <option key={item.name} value={item.name}>
+                        {item.name} — {item.quantity} {item.unit} in stock
+                      </option>
+                    ))}
+                    {inventory.filter((i) => i.category === "Milk").length === 0 && (
+                      <option value="">Loading…</option>
+                    )}
                   </select>
                 </div>
 
                 <div className="form-group">
                   <label>Pot / Size</label>
                   <select name="pot" value={formData.pot} onChange={handleFormChange}>
-                    {POT_OPTIONS.map((p) => {
-                      const inv = inventory.find((i) => i.name === POT_INV[p]);
-                      const stock = inv ? ` — ${inv.quantity} pcs in stock` : "";
-                      return <option key={p} value={p}>{p}{stock}</option>;
-                    })}
+                    {inventory.filter((i) => i.category === "Pots").map((item) => (
+                      <option key={item.name} value={item.name}>
+                        {item.name} — {item.quantity} pcs in stock
+                      </option>
+                    ))}
+                    {inventory.filter((i) => i.category === "Pots").length === 0 && (
+                      <option value="">Loading…</option>
+                    )}
                   </select>
                 </div>
 
