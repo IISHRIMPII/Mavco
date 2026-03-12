@@ -63,7 +63,7 @@ export default function OrderSticker({ order, onClose }) {
         </div>
 
         {/* Sticker preview — fixed 48mm width rendered at screen scale */}
-        <div style={{ display:"flex", justifyContent:"center", padding:"1rem 0", background:"#e5e7eb", borderRadius:"8px", margin:"0 1.5rem" }}>
+        <div style={{ display:"flex", justifyContent:"center", padding:"0.75rem 0", background:"#e5e7eb", borderRadius:"8px", margin:"0 1.5rem" }}>
           <div
             ref={stickerRef}
             style={{
@@ -71,49 +71,46 @@ export default function OrderSticker({ order, onClose }) {
               background: "#fff",
               color: "#000",
               fontFamily: "Arial, Helvetica, sans-serif",
-              fontSize: "9pt",
-              padding: "11px 13px",
+              padding: "6px 8px",
               boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
             }}
           >
-            {/* Brand */}
-            <div style={{ textAlign:"center", fontSize:"15pt", fontWeight:900, letterSpacing:"1px", marginBottom:"6px" }}>
-              🥤 MAVCO
+            {/* Brand + order ID on one line */}
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:"3px" }}>
+              <span style={{ fontSize:"11pt", fontWeight:900, letterSpacing:"0.5px" }}>🥤 MAVCO</span>
+              <span style={{ fontSize:"6pt", color:"#666" }}>#{order.id}</span>
             </div>
-            <div style={{ textAlign:"center", fontSize:"7pt", color:"#666", marginBottom:"6px" }}>
-              Order #{order.id} · {fmt(order.created_at)}
-            </div>
-            <hr style={{ border:"none", borderTop:"1px dashed #aaa", margin:"5px 0" }} />
+            <hr style={{ border:"none", borderTop:"1px dashed #aaa", margin:"3px 0" }} />
 
-            {/* Customer */}
-            <div style={{ fontWeight:900, fontSize:"11pt", marginBottom:"5px" }}>
+            {/* Customer name */}
+            <div style={{ fontWeight:900, fontSize:"9pt", marginBottom:"2px" }}>
               {order.customer_name}
             </div>
-            {order.phone    && <Row label="📞" value={order.phone} />}
-            {order.location && <Row label="📍" value={order.location} />}
-            {order.delivery_time && <Row label="🕐" value={fmt(order.delivery_time)} />}
 
-            <hr style={{ border:"none", borderTop:"1px dashed #aaa", margin:"5px 0" }} />
+            {/* Phone + location on same line if both exist */}
+            <div style={{ fontSize:"7pt", color:"#333", marginBottom:"1px" }}>
+              {order.phone && <span>📞 {order.phone}</span>}
+              {order.phone && order.location && <span>  </span>}
+              {order.location && <span>📍 {order.location}</span>}
+            </div>
+            {order.delivery_time && (
+              <div style={{ fontSize:"7pt", color:"#333", marginBottom:"2px" }}>🕐 {fmt(order.delivery_time)}</div>
+            )}
 
-            {/* Order details */}
-            <Row label="Drink" value={order.drink_name || order.milk_type || "—"} />
-            <Row label="Pot"   value={order.pot} />
-            <Row label="Price" value={`OMR ${Number(order.price).toFixed(2)}`} bold />
+            <hr style={{ border:"none", borderTop:"1px dashed #aaa", margin:"3px 0" }} />
+
+            {/* Order details — two columns */}
+            <Row label="Drink"    value={order.drink_name || order.milk_type || "—"} />
+            <Row label="Pot"      value={order.pot} />
+            <Row label="Price"    value={`OMR ${Number(order.price).toFixed(2)}`} bold />
             <Row label="Delivery" value={order.delivery_paid ? "✓ Paid" : "Collect"} />
 
             {/* Notes */}
             {order.notes && (
-              <>
-                <hr style={{ border:"none", borderTop:"1px dashed #aaa", margin:"5px 0" }} />
-                <div style={{ fontSize:"7.5pt", background:"#f5f5f5", borderRadius:"3px", padding:"4px 5px" }}>
-                  📝 {order.notes}
-                </div>
-              </>
+              <div style={{ fontSize:"6.5pt", borderTop:"1px dashed #aaa", marginTop:"3px", paddingTop:"2px", color:"#444" }}>
+                📝 {order.notes}
+              </div>
             )}
-
-            <div style={{ textAlign:"center", fontSize:"6.5pt", color:"#aaa", marginTop:"6px" }}>
-              Mavco Beverage Box
-            </div>
           </div>
         </div>
 
@@ -133,7 +130,7 @@ export default function OrderSticker({ order, onClose }) {
 
 function Row({ label, value, bold }) {
   return (
-    <div style={{ display:"flex", justifyContent:"space-between", gap:"6px", marginBottom:"3px", fontSize:"8.5pt" }}>
+    <div style={{ display:"flex", justifyContent:"space-between", gap:"4px", marginBottom:"1px", fontSize:"7pt" }}>
       <span style={{ fontWeight:700, flexShrink:0 }}>{label}</span>
       <span style={{ textAlign:"right", fontWeight: bold ? 700 : 400 }}>{value}</span>
     </div>
