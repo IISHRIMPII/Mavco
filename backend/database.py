@@ -91,9 +91,42 @@ def init_db():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS deduction_template (
+            id      INTEGER PRIMARY KEY AUTOINCREMENT,
+            name    TEXT    NOT NULL,
+            amount  REAL    NOT NULL DEFAULT 1
+        )
+    """)
+
     conn.commit()
     conn.close()
     print("[DB] Tables initialized.")
+
+    # ── Seed deduction template (base packaging items) ─────────────────────
+    conn = get_db()
+    count = conn.execute("SELECT COUNT(*) FROM deduction_template").fetchone()[0]
+    if count == 0:
+        default_items = [
+            ("1L Bottle",         1),
+            ("Foam 500ml Bottle",  1),
+            ("Cups",               7),
+            ("Pags (Bags)",        1),
+            ("Straws",             7),
+            ("Wooden Spoons",      1),
+            ("1L Bottle Sticker",  1),
+            ("Cups Sticker",       7),
+            ("Foam Sticker",       1),
+            ("Givaway Sticker",    1),
+            ("Packaging Sticker",  1),
+        ]
+        for name, amount in default_items:
+            conn.execute(
+                "INSERT INTO deduction_template (name, amount) VALUES (?, ?)",
+                (name, amount)
+            )
+        conn.commit()
+    conn.close()
 
     # ── Migrations: add columns to existing tables safely ─────────────────
     conn = get_db()

@@ -2,7 +2,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import {
-  getOrders, createOrder, updateOrder, deleteOrder, parseOrder, deductInventory, getInventory, getDrinks, resetOrders
+  getOrders, createOrder, updateOrder, deleteOrder, parseOrder, deductInventory, getInventory, getDrinks, resetOrders,
+  getDeductionTemplate, saveDeductionTemplate
 } from "../api/client";
 import OrderSticker from "./OrderSticker";
 
@@ -30,21 +31,12 @@ function resolveInvName(value) {
   return MILK_INV_FALLBACK[value] || value;
 }
 
-// Build recipe from a drink object (from DB) + the selected pot
-function buildRecipeFromDrink(drink, pot) {
+// Build recipe from a drink object (from DB) + the selected pot + the saved base template
+function buildRecipeFromDrink(drink, pot, baseTemplate) {
+  // baseTemplate is [{name, amount}, ...] from DB; add the pot on top
   const base = [
-    { name: "1L Bottle",         amount: 1 },
-    { name: "Foam 500ml Bottle", amount: 1 },
+    ...baseTemplate,
     { name: resolveInvName(pot), amount: 1 },
-    { name: "Cups",              amount: 7 },
-    { name: "Pags (Bags)",       amount: 1 },
-    { name: "Straws",            amount: 7 },
-    { name: "Wooden Spoons",     amount: 1 },
-    { name: "1L Bottle Sticker", amount: 1 },
-    { name: "Cups Sticker",      amount: 7 },
-    { name: "Foam Sticker",      amount: 1 },
-    { name: "Givaway Sticker",   amount: 1 },
-    { name: "Packaging Sticker", amount: 1 },
   ];
   const drinkItems = drink
     ? drink.recipe.map((r) => ({ name: r.inventory_name, amount: r.amount }))
@@ -53,20 +45,10 @@ function buildRecipeFromDrink(drink, pot) {
 }
 
 // Legacy fallback for orders that pre-date the drinks system
-function buildRecipeLegacy(order) {
+function buildRecipeLegacy(order, baseTemplate) {
   return [
-    { name: "1L Bottle",         amount: 1 },
-    { name: "Foam 500ml Bottle", amount: 1 },
+    ...baseTemplate,
     { name: resolveInvName(order.pot),       amount: 1 },
-    { name: "Cups",              amount: 7 },
-    { name: "Pags (Bags)",       amount: 1 },
-    { name: "Straws",            amount: 7 },
-    { name: "Wooden Spoons",     amount: 1 },
-    { name: "1L Bottle Sticker", amount: 1 },
-    { name: "Cups Sticker",      amount: 7 },
-    { name: "Foam Sticker",      amount: 1 },
-    { name: "Givaway Sticker",   amount: 1 },
-    { name: "Packaging Sticker", amount: 1 },
     { name: resolveInvName(order.milk_type), amount: 1 },
   ];
 }
@@ -117,6 +99,12 @@ export default function Orders() {
   const [dedItems,   setDedItems]   = useState([]);     // editable recipe
   const [deducting,  setDeducting]  = useState(false);
 
+  // Deduction template editor
+  const [baseTemplate,      setBaseTemplate]      = useState([]);
+  const [showTplEditor,     setShowTplEditor]     = useState(false);
+  const [tplDraft,          setTplDraft]          = useState([]);
+  const [savingTpl,         setSavingTpl]         = useState(false);
+
   // WhatsApp parser
   const [showParser, setShowParser] = useState(false);
   const [rawText,    setRawText]    = useState("");
@@ -140,6 +128,7 @@ export default function Orders() {
   useEffect(() => {
     getInventory().then((res) => setInventory(res.data)).catch(() => {});
     getDrinks().then((res) => setDrinks(res.data)).catch(() => {});
+    getDeductionTemplate().then((res) => setBaseTemplate(res.data)).catch(() => {});
   }, []);
 
   // ── Filtered + sorted orders ──────────────────────────────────────────
@@ -210,7 +199,7 @@ export default function Orders() {
       const selectedDrink = drinks.find((d) => String(d.id) === String(formData.drink_id)) || null;
       setShowForm(false);
       setDedOrder({ ...formData, id: null, _isNew: true });
-      setDedItems(buildRecipeFromDrink(selectedDrink, formData.pot));
+      setDedItems(buildRecipeFromDrink(selectedDrink, formData.pot, baseTemplate));
       return;
     }
 
@@ -315,6 +304,15 @@ export default function Orders() {
           </button>
           <button className="btn btn-primary" onClick={openAdd}>
             + New Order
+          </button>
+          <button
+            className="btn btn-ghost"
+            onClick={() => {
+              setTplDraft(baseTemplate.map((r) => ({ ...r })));
+              setShowTplEditor(true);
+            }}
+          >
+            ⚙️ Deduct Template
           </button>
           <button
             className="btn btn-ghost"
@@ -624,6 +622,87 @@ export default function Orders() {
                 disabled={deducting}
               >
                 {deducting ? "Saving…" : dedOrder._isNew ? "✓ Create Order & Deduct" : "✓ Confirm Deduction"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Deduction Template Editor ─────────────────────────────── */}
+      {showTplEditor && (
+        <div className="modal-overlay" onClick={() => setShowTplEditor(false)}>
+          <div className="modal modal-deduct" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>⚙️ Deduction Template</h2>
+              <button className="modal-close" onClick={() => setShowTplEditor(false)}>✕</button>
+            </div>
+            <p className="deduct-subtitle">
+              These base items are deducted for every new order (plus the drink's own recipe and the selected pot).
+            </p>
+            <div className="deduct-table-wrap">
+              <table className="deduct-table">
+                <thead>
+                  <tr><th>Inventory Item Name</th><th>Amount</th><th></th></tr>
+                </thead>
+                <tbody>
+                  {tplDraft.map((row, idx) => (
+                    <tr key={idx}>
+                      <td>
+                        <input
+                          value={row.name}
+                          onChange={(e) => setTplDraft((d) => d.map((r, i) => i === idx ? { ...r, name: e.target.value } : r))}
+                          style={{ width: "100%", background: "var(--surface2)", color: "var(--text)", border: "1px solid var(--border)", borderRadius: "6px", padding: "4px 8px" }}
+                          placeholder="Item name"
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          value={row.amount}
+                          onChange={(e) => setTplDraft((d) => d.map((r, i) => i === idx ? { ...r, amount: parseFloat(e.target.value) || 0 } : r))}
+                          className="deduct-qty-input"
+                        />
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-sm btn-danger"
+                          onClick={() => setTplDraft((d) => d.filter((_, i) => i !== idx))}
+                        >✕</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div style={{ padding: "0 1rem 0.75rem" }}>
+              <button
+                className="btn btn-secondary"
+                onClick={() => setTplDraft((d) => [...d, { name: "", amount: 1 }])}
+              >
+                + Add Row
+              </button>
+            </div>
+            <div className="form-actions">
+              <button className="btn btn-secondary" onClick={() => setShowTplEditor(false)}>Cancel</button>
+              <button
+                className="btn btn-primary"
+                disabled={savingTpl}
+                onClick={async () => {
+                  setSavingTpl(true);
+                  try {
+                    const res = await saveDeductionTemplate(tplDraft.filter((r) => r.name.trim()));
+                    setBaseTemplate(res.data);
+                    setShowTplEditor(false);
+                  } catch {
+                    alert("Failed to save template.");
+                  } finally {
+                    setSavingTpl(false);
+                  }
+                }}
+              >
+                {savingTpl ? "Saving…" : "💾 Save Template"}
               </button>
             </div>
           </div>

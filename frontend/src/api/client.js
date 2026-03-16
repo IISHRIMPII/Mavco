@@ -37,4 +37,8 @@ export const createDrink    = (data)   => api.post("/drinks", data);
 export const updateDrink    = (id, d)  => api.put(`/drinks/${id}`, d);
 export const deleteDrink    = (id)     => api.delete(`/drinks/${id}`);
 
+// ── Deduction Template ───────────────────────────────────────────────────
+export const getDeductionTemplate  = ()    => api.get("/deduction_template");
+export const saveDeductionTemplate = (items) => api.put("/deduction_template", { items });
+
 export default api;
