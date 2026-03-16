@@ -1,12 +1,12 @@
 // src/components/Inventory.js
 import React, { useEffect, useState, useCallback } from "react";
 import {
-  getInventory, addInventory, updateInventory, restockItem, deleteInventory
+  getInventory, addInventory, updateInventory, restockItem, deleteInventory, archiveInventory
 } from "../api/client";
 
 const UNIT_OPTIONS = ["L", "kg", "g", "ml", "pcs", "pkt", "jar", "box", "roll"];
 const CATEGORIES = ["Containers", "Accessories", "Stickers", "Ingredients", "Milk", "Pots", "Other"];
-const FILTER_TABS = ["All", ...CATEGORIES, "⚠️ Low Stock"];
+const FILTER_TABS = ["All", ...CATEGORIES, "⚠️ Low Stock", "📦 Archived"];
 
 const EMPTY_FORM = {
   name: "", quantity: "", unit: "pcs", cost_per_unit: "", low_stock_threshold: "10", category: "Other",
@@ -34,7 +34,7 @@ export default function Inventory() {
     setLoading(true);
     setError(null);
     try {
-      const res = await getInventory();
+      const res = await getInventory({ show_archived: 1 });
       setItems(res.data);
     } catch {
       setError("Failed to load inventory.");
@@ -45,13 +45,16 @@ export default function Inventory() {
 
   useEffect(() => { load(); }, [load]);
 
-  const displayed = filter === "⚠️ Low Stock"
-    ? items.filter((i) => i.is_low_stock)
-    : filter === "All"
-    ? items
-    : items.filter((i) => i.category === filter);
+  const activeItems   = items.filter((i) => !i.archived);
+  const archivedItems  = items.filter((i) =>  i.archived);
 
-  const lowCount = items.filter((i) => i.is_low_stock).length;
+  const displayed =
+    filter === "📦 Archived"   ? archivedItems
+    : filter === "⚠️ Low Stock" ? activeItems.filter((i) => i.is_low_stock)
+    : filter === "All"          ? activeItems
+    : activeItems.filter((i) => i.category === filter);
+
+  const lowCount = activeItems.filter((i) => i.is_low_stock).length;
 
   // ── Form helpers ────────────────────────────────────────────────────────
   const openAdd = () => {
@@ -110,8 +113,13 @@ export default function Inventory() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this inventory item?")) return;
+    if (!window.confirm("Permanently delete this inventory item?")) return;
     await deleteInventory(id);
+    await load();
+  };
+
+  const handleArchiveToggle = async (item) => {
+    await archiveInventory(item.id);
     await load();
   };
 
@@ -140,8 +148,8 @@ export default function Inventory() {
       {/* Stats bar */}
       <div className="inv-stats">
         <div className="inv-stat">
-          <span className="inv-stat-value">{items.length}</span>
-          <span className="inv-stat-label">Total Items</span>
+          <span className="inv-stat-value">{activeItems.length}</span>
+          <span className="inv-stat-label">Active Items</span>
         </div>
         <div className={`inv-stat ${lowCount > 0 ? "danger" : ""}`}>
           <span className="inv-stat-value">{lowCount}</span>
@@ -149,9 +157,13 @@ export default function Inventory() {
         </div>
         <div className="inv-stat">
           <span className="inv-stat-value">
-            OMR {items.reduce((s, i) => s + i.quantity * i.cost_per_unit, 0).toFixed(2)}
+            OMR {activeItems.reduce((s, i) => s + i.quantity * i.cost_per_unit, 0).toFixed(2)}
           </span>
           <span className="inv-stat-label">Stock Value</span>
+        </div>
+        <div className="inv-stat">
+          <span className="inv-stat-value">{archivedItems.length}</span>
+          <span className="inv-stat-label">📦 Archived</span>
         </div>
       </div>
 
@@ -159,9 +171,10 @@ export default function Inventory() {
       <div className="filter-tabs">
         {FILTER_TABS.map((tab) => {
           const count =
-            tab === "All" ? items.length
+            tab === "All"          ? activeItems.length
             : tab === "⚠️ Low Stock" ? lowCount
-            : items.filter((i) => i.category === tab).length;
+            : tab === "📦 Archived"  ? archivedItems.length
+            : activeItems.filter((i) => i.category === tab).length;
           return (
             <button
               key={tab}
@@ -196,7 +209,7 @@ export default function Inventory() {
               <tr><td colSpan={9} className="empty-row">No items found</td></tr>
             ) : (
               displayed.map((item) => (
-                <tr key={item.id} className={item.is_low_stock ? "row-warning" : ""}>
+              <tr key={item.id} className={item.archived ? "row-archived" : item.is_low_stock ? "row-warning" : ""}>
                   <td>{item.id}</td>
                   <td><strong>{item.name}</strong></td>
                   <td><span className="category-badge">{item.category}</span></td>
@@ -211,14 +224,25 @@ export default function Inventory() {
                       : <span className="badge badge-ok">✓ OK</span>}
                   </td>
                   <td className="action-cell">
+                    {!item.archived && (
+                      <button
+                        className="btn btn-sm btn-success"
+                        onClick={() => { setRestockItem2(item); setRestockAmount(""); }}
+                      >
+                        + Stock
+                      </button>
+                    )}
+                    {!item.archived && (
+                      <button className="btn btn-sm btn-secondary" onClick={() => openEdit(item)}>✏️</button>
+                    )}
                     <button
-                      className="btn btn-sm btn-success"
-                      onClick={() => { setRestockItem2(item); setRestockAmount(""); }}
+                      className="btn btn-sm btn-secondary"
+                      title={item.archived ? "Unarchive" : "Archive"}
+                      onClick={() => handleArchiveToggle(item)}
                     >
-                      + Stock
+                      {item.archived ? "📤 Unarchive" : "📦 Archive"}
                     </button>
-                    <button className="btn btn-sm btn-secondary" onClick={() => openEdit(item)}>✏️</button>
-                    <button className="btn btn-sm btn-danger"    onClick={() => handleDelete(item.id)}>🗑</button>
+                    <button className="btn btn-sm btn-danger" onClick={() => handleDelete(item.id)}>🗑</button>
                   </td>
                 </tr>
               ))

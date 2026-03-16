@@ -13,16 +13,19 @@ inventory_bp = Blueprint("inventory", __name__)
 def get_inventory():
     db = get_db()
     category = request.args.get("category", "").strip()
+    show_archived = request.args.get("show_archived", "0") == "1"
+    archived_filter = "" if show_archived else "AND (archived = 0 OR archived IS NULL)"
     if category and category.lower() not in ("all", ""):
         rows = db.execute(
-            "SELECT * FROM inventory WHERE category = ? ORDER BY name ASC",
+            f"SELECT * FROM inventory WHERE category = ? {archived_filter} ORDER BY name ASC",
             (category,)
         ).fetchall()
     else:
-        rows = db.execute("SELECT * FROM inventory ORDER BY category ASC, name ASC").fetchall()
+        rows = db.execute(
+            f"SELECT * FROM inventory WHERE 1=1 {archived_filter} ORDER BY category ASC, name ASC"
+        ).fetchall()
     db.close()
     items = [dict(r) for r in rows]
-    # Tag low-stock items
     for item in items:
         item["is_low_stock"] = item["quantity"] <= item["low_stock_threshold"]
     return jsonify(items)
@@ -84,7 +87,7 @@ def update_inventory_item(item_id):
         db.close()
         return jsonify({"error": "Item not found"}), 404
 
-    allowed = ["name", "quantity", "unit", "cost_per_unit", "low_stock_threshold", "category"]
+    allowed = ["name", "quantity", "unit", "cost_per_unit", "low_stock_threshold", "category", "archived"]
     updates = {k: v for k, v in data.items() if k in allowed}
     if not updates:
         db.close()
@@ -116,6 +119,24 @@ def restock(item_id):
         return jsonify({"error": "Item not found"}), 404
 
     db.execute("UPDATE inventory SET quantity = quantity + ? WHERE id = ?", (amount, item_id))
+    db.commit()
+    updated = db.execute("SELECT * FROM inventory WHERE id = ?", (item_id,)).fetchone()
+    db.close()
+    item = dict(updated)
+    item["is_low_stock"] = item["quantity"] <= item["low_stock_threshold"]
+    return jsonify(item)
+
+
+# ── PATCH toggle archive ───────────────────────────────────────────────────
+@inventory_bp.route("/inventory/<int:item_id>/archive", methods=["PATCH"])
+def toggle_archive(item_id):
+    db = get_db()
+    row = db.execute("SELECT * FROM inventory WHERE id = ?", (item_id,)).fetchone()
+    if not row:
+        db.close()
+        return jsonify({"error": "Item not found"}), 404
+    new_state = 0 if row["archived"] else 1
+    db.execute("UPDATE inventory SET archived = ? WHERE id = ?", (new_state, item_id))
     db.commit()
     updated = db.execute("SELECT * FROM inventory WHERE id = ?", (item_id,)).fetchone()
     db.close()

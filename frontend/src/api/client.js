@@ -16,7 +16,8 @@ export const deleteOrder    = (id)     => api.delete(`/orders/${id}`);
 export const resetOrders    = ()       => api.post("/orders/reset");
 
 // ── Inventory ──────────────────────────────────────────────────────────────
-export const getInventory    = ()       => api.get("/inventory");
+export const getInventory    = (params) => api.get("/inventory", { params });
+export const archiveInventory = (id)    => api.patch(`/inventory/${id}/archive`);
 export const addInventory    = (data)   => api.post("/inventory", data);
 export const updateInventory = (id, d)  => api.put(`/inventory/${id}`, d);
 export const restockItem     = (id, amt)=> api.patch(`/inventory/${id}/restock`, { amount: amt });

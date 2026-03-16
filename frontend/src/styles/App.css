@@ -223,6 +223,8 @@ body {
 .empty-row     { text-align: center; color: var(--text-muted); padding: 2rem !important; }
 .location-cell { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-warning td { background: rgba(239,68,68,0.05); }
+.row-archived td { opacity: 0.45; background: rgba(0,0,0,0.03); }
+.row-archived td strong { text-decoration: line-through; }
 .qty-low       { color: var(--danger); font-weight: 700; }
 .profit-pos    { color: var(--success); font-weight: 600; }
 .profit-neg    { color: var(--danger); font-weight: 600; }

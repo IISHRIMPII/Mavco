@@ -100,6 +100,7 @@ def init_db():
     for sql in [
         "ALTER TABLE orders ADD COLUMN drink_name TEXT DEFAULT ''",
         "ALTER TABLE orders ADD COLUMN drink_id   INTEGER DEFAULT NULL",
+        "ALTER TABLE inventory ADD COLUMN archived INTEGER NOT NULL DEFAULT 0",
     ]:
         try:
             conn.execute(sql)
