@@ -95,12 +95,9 @@ export default function OrderSticker({ order, onClose }) {
 
             <hr style={{ border:"none", borderTop:"1px dashed #555", margin:"1px 0" }} />
 
-            {/* Row 4: Drink + Pot */}
-            <div style={{ display:"flex", justifyContent:"space-between", gap:"4px", fontSize:"7.5pt" }}>
-              <span style={{ minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-                <b>Drink:</b> {order.drink_name || "—"}
-              </span>
-              <span style={{ flexShrink:0 }}><b>Pot:</b> {order.pot}</span>
+            {/* Row 4: Drink */}
+            <div style={{ fontSize:"7.5pt" }}>
+              <b>Drink:</b> {order.drink_name || "—"}
             </div>
 
             {/* Row 5: Price + Delivery paid */}
